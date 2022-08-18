@@ -18,5 +18,6 @@ namespace Ek_robotics_probeaufgabe_code.Interpreter.Symbols
             this.leftChild = leftChild;
             this.rightChild = rightChild;
         }
+        public abstract int? evaluate();
     }
 }

@@ -8,6 +8,8 @@ namespace worksample
 {
     class ExpressionInterpreter
     {
+
+        public string expressionAsText { get; set; }
         public class Variable
         {
             public Variable(char name)
@@ -18,25 +20,21 @@ namespace worksample
         }
         public ExpressionInterpreter(string expressionAsText)
         {
-            // ...
+            this.expressionAsText = expressionAsText; 
         }
         public int CalculateWith(Dictionary<Variable, int> valuesOfVariables)
         {
-            // ...
+            this.expressionAsText = preProcessExpression(this.expressionAsText, valuesOfVariables);
+            TreeNode expressionAsTree = ParseString(expressionAsText); 
+            return (int)expressionAsTree.evaluate();    
         }
-       
-        private TreeNode ParseString(string expressionAsText, Dictionary<Variable, int> valuesOfVariables)
-        {
 
-            // TODO Dieser ganze kram muss nur einmal am Anfang gemacht werden, kann also ausgelagert werden, dann mu
-            // ss die Methode auch das dictionary nicht übergeben bekommen 
-            // Remove all whitespaces
-            expressionAsText = Regex.Replace(expressionAsText, @"s", "");
-            // Remove outside Parenthesis if there are some
-            expressionAsText = RemoveOutsideParenthesis(expressionAsText); 
-            // Substitute the variables with the actual values
-            expressionAsText = substituteVariables(valuesOfVariables, expressionAsText); 
-           
+       
+        private TreeNode ParseString(string expressionAsText)
+        { 
+            // Remove outer parenthesis
+            expressionAsText = RemoveOutsideParenthesis(expressionAsText);
+
             // Find the root, e.g the least important operator
             string dividerElement = String.Empty;
             int dividerElementIndex = -1;
@@ -46,7 +44,8 @@ namespace worksample
                 if (cur_el.Equals("("))
                 {
                     // Set i to the location of the corresponding closing bracket
-                    i = getClosingBracket(expressionAsText.Substring(i)) + 1;
+                    i = i + getClosingBracket(expressionAsText.Substring(i));
+                    continue;
                 }
                 if (cur_el.Equals("+") || cur_el.Equals("*") || cur_el.Equals("-"))
                 {
@@ -55,7 +54,7 @@ namespace worksample
                         dividerElement = cur_el;
                         dividerElementIndex = i;
                     }
-                    else if (getOperatorValue(dividerElement) <= getOperatorValue(cur_el))
+                    else if (getOperatorValue(dividerElement) >= getOperatorValue(cur_el))
                     {
                         dividerElement = cur_el;
                         dividerElementIndex = i;
@@ -79,29 +78,40 @@ namespace worksample
             }
             else
             {
-                string leftSubString = expressionAsText.Substring(0, dividerElementIndex-1);
-                string rightSubString = expressionAsText.Substring(dividerElementIndex+1, expressionAsText.Length);
-
-                if (dividerElement.Equals("+"))
+                // Divide the expression in the left and right subpart
+                string leftSubString = expressionAsText.Substring(0, dividerElementIndex);
+                string rightSubString = expressionAsText.Substring(dividerElementIndex + 1);
+                // Build the correct treeNode and do the recursive call
+                switch (dividerElement)
                 {
-                    TreeNode subtree = new Multiplication(ParseString(leftSubString), ParseString(rightSubString));
-                }
-                else if (dividerElement.Equals("-"))
-                {
-
-                }
-                else if (dividerElement.Equals("+"))
-                {
-
+                    case "+":
+                        return new Addition(ParseString(leftSubString), ParseString(rightSubString));         
+                    case "-":
+                        return new Subtraction(ParseString(leftSubString), ParseString(rightSubString));                       
+                    case "*":
+                        return new Multiplication(ParseString(leftSubString), ParseString(rightSubString));
+                    default:
+                        throw new ArgumentException("Invalid operator in the expression");
                 }
             }
-            // Build the treeNode and evaluate the leftChild and the rightChild
+        }
 
+        private string preProcessExpression(string expressionAsText, Dictionary<Variable, int> valuesOfVariables)
+        {
+            // Remove all whitespaces --> TODO funztz gerade nicht 
+            expressionAsText = Regex.Replace(expressionAsText, @"s", "");
+            // Remove outside Parenthesis if there are some
+            expressionAsText = RemoveOutsideParenthesis(expressionAsText);
+            // Substitute the variables with the actual values
+            expressionAsText = substituteVariables(valuesOfVariables, expressionAsText);
+
+            return expressionAsText;
         }
 
         private int getClosingBracket(string subExpression)
         {
-            for(int i = 0; i < subExpression.Length; i++)
+            // We start at index 1 here because index 0 is where the opening bracket lies
+            for(int i = 1; i < subExpression.Length; i++)
             {
                 string cur_el = Convert.ToString(subExpression[i]);
                 if (cur_el.Equals(")"))
@@ -111,7 +121,7 @@ namespace worksample
                 else if (cur_el.Equals("("))
                 {
                     // Set i to the index of the inner closing bracket + 1
-                    i = getClosingBracket(subExpression.Substring(i)) + 1;
+                    i = i + getClosingBracket(subExpression.Substring(i));
                 }
             }
 
@@ -139,13 +149,14 @@ namespace worksample
             // Check first and last element for parenthesis
             if (expressionAsText[0] == '(')
             {
-                expressionAsText = expressionAsText.Substring(1);
+                // Find coresponding closing bracket and check if it is the last element 
+                int closingBracketIndex = getClosingBracket(expressionAsText);
+                if (closingBracketIndex == expressionAsText.Length - 1)
+                {
+                    expressionAsText = expressionAsText.Substring(1);
+                    expressionAsText = expressionAsText.Remove(expressionAsText.Length - 1);
+                }
             }
-            if (expressionAsText[expressionAsText.Length] == ')')
-            {
-                expressionAsText = expressionAsText.Remove(expressionAsText.Length - 1); 
-            }
-
             return expressionAsText;
         }
 
@@ -154,7 +165,8 @@ namespace worksample
             {
                 char operand = variableValueCombination.Key.name;
                 int value = variableValueCombination.Value;
-                expressionAsText = expressionAsText.Replace(operand, Convert.ToChar(value));
+                // TODO-->Dieser doppelte Typecast geht bestimmt noch hübscher
+                expressionAsText = expressionAsText.Replace(operand, Convert.ToChar(Convert.ToString(value)));
             }
 
             return expressionAsText;

@@ -13,5 +13,10 @@ namespace Ek_robotics_probeaufgabe_code.Interpreter.Symbols
         {
             this.value = value;
         }
+
+        public override int? evaluate()
+        {
+            return value;
+        }
     }
 }

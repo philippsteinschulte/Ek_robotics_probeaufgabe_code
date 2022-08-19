@@ -38,7 +38,8 @@ namespace Ek_robotics_probeaufgabe_code.Interpreter
             }
             this.expressionAsText = preProcessExpression(this.expressionAsText, valuesOfVariables);
             TreeNode expressionAsTree = ParseString(expressionAsText); 
-            return (int)expressionAsTree.evaluate();    
+            // Note: Since we ensure that the expression tree can never ne empty, the result is never null
+            return (int)expressionAsTree.evaluate()!;    
         }
 
         

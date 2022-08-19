@@ -1,3 +1,3 @@
 ## Ek robotics test exercise
 
-This readme will give an short introduction about the structure of this project. 
+This repository contains a solution for the test exercise at E.K robotics. :-)

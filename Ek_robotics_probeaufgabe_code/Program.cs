@@ -1,5 +1,5 @@
-﻿using static worksample.ExpressionInterpreter;
-using worksample;
+﻿using static Ek_robotics_probeaufgabe_code.Interpreter.ExpressionInterpreter;
+using Ek_robotics_probeaufgabe_code.Interpreter;
 
 int example()
 {

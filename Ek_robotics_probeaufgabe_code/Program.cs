@@ -6,7 +6,6 @@ class TestProgram
 {
     static void Main(string[] args)
     {
-        // Display the number of command line arguments.
         TestProgram testProgram = new TestProgram();
         int result = testProgram.example();
         Console.WriteLine(result);
